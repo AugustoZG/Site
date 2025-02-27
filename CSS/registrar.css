@@ -1,0 +1,19 @@
+@charset "UTF-8";
+main {
+    margin-top: 30px;
+    
+}
+
+main input {
+    margin-bottom: 10px;
+}
+
+body {
+background-color: #243446;
+color: rgb(255, 255, 255);
+}
+
+input.btn-outline-secondary {
+   color : white;
+   border-color: white;
+}

@@ -1,1 +1,32 @@
-<h1>tome</h1>
+
+<nav class="navbar navbar-dark bg-dark">
+        
+        <a class="navbar-brand" href="#">
+        <img src="/Imagens/Icon/StickyNote.png" width="30" height="30" class="d-inline-block align-top">
+        AugustoNotes
+        </a> 
+        <form action="/cadastrar">
+            <input class="btn btn-outline-primary" type="submit" value="Cadastrar">
+        </form>
+</nav>
+<main>
+    <div class="container">
+        <div class="row">
+            <div class="col-6 offset-3" >
+                <form action="/logar" method="post" enctype="multipart/form-data">
+                    <h2>Login</h2>
+                    
+                    <label  type="text">Nome</label>
+                    <input class="form-control" name="nome" type="text" placeholder="Digite seu nome">
+                    
+                    <label >Senha</label>
+                    <input class="form-control" name="senha" type="password" placeholder="Digite sua senha">
+
+                    <input class="btn btn-outline-secondary" type="submit" value="Logar">
+                    <label for="" style="color: red; font-size: 20px;">{{{mensagem}}}</label>
+                </form>    
+
+            </div>
+        </div>
+    </div>
+</main>

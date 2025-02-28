@@ -47,18 +47,68 @@ connection.connect(function(erro){
     console.log('Conectado ao banco de dados');
 })
 
+
+
 // Rota Principal
-app.get('/', function(req, res) {
+app.get('/logar', function(req, res) {
+    res.render('logar');
+});
+
+app.get('/cadastrar', function(req, res) {
     res.render('registrar');
 });
 
+app.get('/helloscreen', function(req, res) {
+    res.render('helloscreen');
+})
+
 // Rota Principal cadastrar
 app.post('/cadastrar', function(req, res) {
-    console.log(req.body);
-    console.log(req.files.imagem.name);
+    // enviar dados para a tabela do MySQL
+    let name = req.body.nome;
+    let email = req.body.email;
+    let password = req.body.senha;
+    let imagem = req.files.imagem.name;
 
-    req.files.imagem.mv('../Imagens/Enviadas/' + req.files.imagem.name);
+    let sql = `INSERT INTO users(name, email, password, imagem) VALUES('${name}', '${email}', '${password}', '${imagem}')`;     
+    
+    
+    connection.query(sql, function(erro,retorno) {
+        if (erro) throw erro;
+
+        req.files.imagem.mv('../Imagens/Enviadas/' + req.files.imagem.name);
+        
+        console.log(retorno);
+    });
+    // return para rota principal tela*
+
+    app.get('/logar', function(req, res) {
+        res.render('logar');
+    });
+    res.redirect('/logar');
     res.end();
+});
+
+app.post('/logar', function(req, res) {
+    let nome = req.body.nome.trim();
+    let password = req.body.senha;
+
+    let sql = 'SELECT name, imagem FROM users WHERE name = ? AND password = ?';
+
+    connection.query(sql, [nome, password], function(erro, retorno) {
+        if (erro) {
+            console.error('Erro na consulta:', erro);
+            return res.status(500).send('Erro interno no servidor');
+        }
+
+        if (retorno.length > 0) {
+            // Login bem-sucedido - Renderiza a tela e passa o nome
+            return res.render('helloscreen', { nome: retorno[0].name, imagem: retorno[0].imagem });
+        } else {
+            // Login falhou
+            return res.render('logar', { mensagem: 'Usuário ou senha inválidos' });
+        }
+    });
 });
 
 app.listen(8080);

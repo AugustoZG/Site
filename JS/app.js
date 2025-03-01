@@ -1,21 +1,21 @@
+
+// abaixo é uma importação direto das ferramentas
+//__________________________________________________________
 // importando modulo express
 const express = require('express');
-
 // Importando modulo express-handlebars
 const { engine } = require('express-handlebars');
-
 //importar modulo fileupload
 const fileUpload = require('express-fileupload');
-
 // importando express session
 const session = require('express-session');
-
-
 //importando modulo mysql
 const mysql = require('mysql2');
 
 const app = express();
 
+// abaixo é uma importação direto das pastas para utilizar no sistema
+//__________________________________________________________
 //habilitando upload de arquivos
 app.use(fileUpload());
 
@@ -28,9 +28,14 @@ app.use('/css', express.static('../CSS'));
 // servindo imagens e outros arquivos estáticos
 app.use('/Imagens', express.static('../Imagens'));
 
+app.use('/Imagens/Enviadas', express.static('../Imagens/Enviadas'));
+
+// abaixo é as funções do sistema como conexão do banco, ações e rotas
+//__________________________________________________________
+
 // criando seção para autenticar usuário
 app.use(session({
-    secret: 'admin', // Troque por algo seguro em produção
+    secret: 'admin', 
     resave: false,
     saveUninitialized: true
 }));
@@ -50,13 +55,13 @@ const connection = mysql.createConnection({
     user: 'root',
     password: 'G@T0PR3T0o',
     database: 'projeto_site'
-})
+});
 
 //test conection
 connection.connect(function(erro){
     if (erro) throw erro;
     console.log('Conectado ao banco de dados');
-})
+});
 
 // Rota Principal
 app.get('/logar', function(req, res) {
@@ -68,19 +73,50 @@ app.get('/cadastrar', function(req, res) {
 });
 
 app.get('/helloscreen', function(req, res) {
-    res.render('helloscreen');
-})
+
+    res.render('helloscreen', {
+        nome: req.session.user.nome,
+        imagem: req.session.user.imagem,
+        isAdmin: isAdmin
+    });
+});
 
 app.get('/adminlist', (req, res) => {
     if (!req.session.user) {
         return res.redirect('/logar'); 
     }
 
+    let isAdmin = req.session.user.nome === 'admin';
     res.render('adminlist', {
         nome: req.session.user.nome,
-        imagem: req.session.user.imagem
+        imagem: req.session.user.imagem,
+        isAdmin: isAdmin
     });
 });
+
+// app.post('/adminlist', (req, res) => {
+
+    // let sql = `select * from users where name = ? and email = ?`;
+
+    // connection.query(sql, [name, email, imagem], function(erro, resultados) {
+    //     resultados.first();
+    //     while (!resultados.eof) {
+    //         console.log(resultados.fields);
+
+    //         usuarios = resultados.get('name');
+    //         emails = resultados.get('email');
+    //         imagem = resultados.get('imagem');
+
+    //         res.render('adminlist', {
+    //             user: usuarios,
+    //             email: emails,
+    //             image: imagem
+    //         });
+
+    //         resultados.next();
+    //     }
+    // })
+// });
 
 // Rota Principal cadastrar
 const path = require('path');
@@ -88,8 +124,8 @@ const path = require('path');
 // Rota Principal cadastrar
 app.post('/cadastrar', function(req, res) {
     // Obter dados do formulário
-    let name = req.body.nome;
-    let email = req.body.email;
+    let name = req.body.nome.toLowerCase().trim();
+    let email = req.body.email.toLowerCase().trim();
     let password = req.body.senha;
     let imagem = req.files ? req.files.imagem : null;  // Verificar se o arquivo foi enviado
 
@@ -135,48 +171,8 @@ app.post('/cadastrar', function(req, res) {
     });
 });
 
-
-// app.post('/cadastrar', function(req, res) {
-//     // Enviar dados para a tabela do MySQL
-//     let name = req.body.nome;
-//     let email = req.body.email;
-//     let password = req.body.senha;
-//     let imagem = req.files ? req.files.imagem : null;  // Verificar se o arquivo foi enviado
-
-//     // Verificar se algum campo está vazio
-//     if (!name || !email || !password || !imagem) {
-//         return res.render('cadastrar', { mensagem: 'É necessário preencher todos os campos' });  // Retorna resposta caso algum campo esteja vazio
-//     }
-
-//     // Caminho para salvar a imagem
-//     let caminhoImagem = path.join('../Imagens/Enviadas', imagem.name);
-
-//     // Inserir no banco de dados
-//     let sql = 'INSERT INTO users(name, email, password, imagem) VALUES(?, ?, ?, ?)';
-    
-//     connection.query(sql, [name, email, password, imagem.name], function(erro, retorno) {
-//         if (erro) {
-//             console.error('Erro ao inserir no banco:', erro);
-//             return res.status(500).send('Erro ao cadastrar usuário.');
-//         }
-
-//         // Salvar a imagem no servidor
-//         imagem.mv(caminhoImagem, function(err) {
-//             if (err) {
-//                 console.error('Erro ao salvar imagem:', err);
-//                 return res.status(500).send('Erro ao salvar imagem.');
-//             }
-
-//             console.log('Usuário cadastrado:', retorno);
-//             // Redirecionar para a tela de login após o cadastro
-//             return res.redirect('/logar');
-//         });
-//     });
-// });
-
-
 app.post('/logar', function(req, res) {
-    let nome = req.body.nome;
+    let nome = req.body.nome.toLowerCase().trim();
     let password = req.body.senha;
 
     let sql = 'SELECT name, imagem FROM users WHERE name = ? AND password = ?';
@@ -187,7 +183,7 @@ app.post('/logar', function(req, res) {
             return res.status(500).send('Erro interno no servidor');
         }
 
-        if (retorno.length === 0) {
+        if (retorno.length == 0) {
             return res.render('logar', { mensagem: 'Usuário ou senha inválidos' });
         }
 
@@ -197,15 +193,15 @@ app.post('/logar', function(req, res) {
             imagem: retorno[0].imagem
         };
 
-        // Verificar se é admin e redirecionar
-        if (nome === 'admin') {
-            return res.redirect('/adminlist');
-        } else {
-            return res.render('helloscreen', {
-                nome: retorno[0].name,
-                imagem: retorno[0].imagem
-            });
+        isAdmin = retorno[0].name == 'admin';
+        
+        res.redirect('/helloscreen');
+        return res.render('helloscreen', {
+            nome: retorno[0].name,
+            imagem: retorno[0].imagem,
+            isAdmin: isAdmin
         }
+        );
     });
 });
 

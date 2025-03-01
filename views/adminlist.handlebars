@@ -1,17 +1,36 @@
 <nav class="navbar navbar-dark bg-dark">
-        
-        <a class="navbar-brand" href="/helloscreen">
-        <img src="/Imagens/Icon/StickyNote.png" width="30" height="30" class="d-inline-block align-top">
-        AugustoNotes
-        </a> 
+            <a class="navbar-brand" href="/helloscreen">
+            <img src="/Imagens/Icon/StickyNote.png" width="30" height="30" class="d-inline-block align-top">
+            AugustoNotes
+        </a>
+
         <form action="/logar" method="get">
         <button class="btn btn-outline-secondary" onclick="window.location.href='/logout'">Logout</button>
         </form>
         <a class="navbar-brand" href="#"> {{{nome}}} <img src="/Imagens/Enviadas/{{{imagem}}}" alt="Foto do usuário" style="width: 50px; height: 50px; border-radius: 50%;"></a>
 </nav>
-
+<aside class="asideleft bg-dark" >
+        <form action="/notes" method="get">
+                <button class="btn btn-outline-secondary" onclick="window.location.href='/notes'">Notas</button>
+        </form>
+</aside>
 <main>
     <h1>Admin List</h1>
+
+    <div class="container">
+        <div class="row">
+            <div class="col-12 col-sm-6 col-md-4 col-lg-3" >
+                <div class="card">
+                    <img src="../Imagens/Enviadas/eu.jpg" width="180" height="180" alt="#">
+                    <p>Usuario</p>
+                    <p>Email</p>
+                    <a href="#">Adicionar</a>
+                    <a href="#">Remover</a>
+                </div>
+               
+            </div>
+        </div>
+    </div>
 </main>
 
 

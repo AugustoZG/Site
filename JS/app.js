@@ -65,16 +65,19 @@ connection.connect(function(erro){
 
 // Rota Principal
 app.get('/logar', function(req, res) {
-    res.render('logar');
+    res.render('cadastros/logar', { style: 'padrao.css', title: 'Login' });
+    
 });
 
 app.get('/cadastrar', function(req, res) {
-    res.render('cadastrar');
+    res.render('cadastros/cadastrar',{style:'padrao.css'});
 });
 
 app.get('/helloscreen', function(req, res) {
 
-    res.render('helloscreen', {
+    res.render('telas/helloscreen', {
+        style: 'padrao.css',
+        title: 'Home',
         nome: req.session.user.nome,
         imagem: req.session.user.imagem,
         isAdmin: isAdmin
@@ -87,39 +90,38 @@ app.get('/adminlist', (req, res) => {
     }
 
     let isAdmin = req.session.user.nome === 'admin';
-    res.render('adminlist', {
+
+    let sql = `select * from users where name != 'admin'`;
+
+    connection.query(sql, function (error, retorno) {
+        if (error) {
+            console.error('Erro ao buscar usuários:', error);
+            return res.status(500).send('Erro ao buscar usuários.');
+        }
+        res.render('telas/adminlist', {
+            style: 'padrao.css',
+            users:retorno,      
+            nome: req.session.user.nome,
+            imagem: req.session.user.imagem,
+            isAdmin: isAdmin
+        });
+    })
+});
+
+app.get('/notes', function(req, res) {    
+    
+    let isAdmin = req.session.user.nome === 'admin';
+    res.render('cadastros/notes', {
+        style: 'padrao.css',
         nome: req.session.user.nome,
         imagem: req.session.user.imagem,
         isAdmin: isAdmin
-    });
-});
-
-// app.post('/adminlist', (req, res) => {
-
-    // let sql = `select * from users where name = ? and email = ?`;
-
-    // connection.query(sql, [name, email, imagem], function(erro, resultados) {
-    //     resultados.first();
-    //     while (!resultados.eof) {
-    //         console.log(resultados.fields);
-
-    //         usuarios = resultados.get('name');
-    //         emails = resultados.get('email');
-    //         imagem = resultados.get('imagem');
-
-    //         res.render('adminlist', {
-    //             user: usuarios,
-    //             email: emails,
-    //             image: imagem
-    //         });
-
-    //         resultados.next();
-    //     }
-    // })
-// });
-
+    })
+    
+})
 // Rota Principal cadastrar
 const path = require('path');
+const { title } = require('process');
 
 // Rota Principal cadastrar
 app.post('/cadastrar', function(req, res) {
@@ -131,7 +133,7 @@ app.post('/cadastrar', function(req, res) {
 
     // Verificar se algum campo está vazio
     if (!name || !email || !password || !imagem) {
-        return res.render('cadastrar', { mensagem: 'É necessário preencher todos os campos' });  // Retorna resposta caso algum campo esteja vazio
+        return res.render('cadastros/cadastrar', {style: 'padrao.css',title: 'Cadastrar', mensagem: 'É necessário preencher todos os campos' });  // Retorna resposta caso algum campo esteja vazio
     }
 
     // Verificar se o nome de usuário já existe no banco de dados
@@ -144,7 +146,7 @@ app.post('/cadastrar', function(req, res) {
         }
 
         if (resultados.length > 0) {
-            return res.render('cadastrar', { mensagem: 'Usuário já cadastrado. Tente outro nome.' });
+            return res.render('cadastros/cadastrar', {style: 'padrao.css',title: 'Cadastrar', mensagem: 'Usuário já cadastrado. Tente outro nome.' });
         }
 
         let caminhoImagem = path.join('../Imagens/Enviadas', imagem.name);
@@ -184,7 +186,7 @@ app.post('/logar', function(req, res) {
         }
 
         if (retorno.length == 0) {
-            return res.render('logar', { mensagem: 'Usuário ou senha inválidos' });
+            return res.render('cadastros/logar', {style: 'padrao.css', mensagem: 'Usuário ou senha inválidos' });
         }
 
         // Armazenar nome e imagem na sessão
@@ -196,7 +198,8 @@ app.post('/logar', function(req, res) {
         isAdmin = retorno[0].name == 'admin';
         
         res.redirect('/helloscreen');
-        return res.render('helloscreen', {
+        return res.render('telas/helloscreen', {
+            style: 'padrao.css',
             nome: retorno[0].name,
             imagem: retorno[0].imagem,
             isAdmin: isAdmin

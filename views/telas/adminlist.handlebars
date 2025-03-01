@@ -1,0 +1,42 @@
+<nav class="navbar navbar-dark bg-dark">
+            <a class="navbar-brand" href="/helloscreen">
+            <img src="/Imagens/Icon/StickyNote.png" width="30" height="30" class="d-inline-block align-top">
+            AugustoNotes
+        </a>
+
+        <form action="/logar" method="get">
+        <button class="btn btn-outline-secondary" onclick="window.location.href='/logout'">Logout</button>
+        </form>
+        <a class="navbar-brand" href="#"> {{{nome}}} <img src="/Imagens/Enviadas/{{{imagem}}}" alt="Foto do usuário" style="width: 50px; height: 50px; border-radius: 50%;"></a>
+</nav>
+<aside class="asideleft bg-dark" >
+        <form action="/notes" method="get">
+                <button class="btn btn-outline-secondary" onclick="window.location.href='/notes'">Notas</button>
+        </form>
+</aside>
+<main style="margin-top: 30px; margin-left: 8%;">
+    <h1 class="text-center">Lista de usuarios do sistema</h1>
+        <div class="container">
+                <div class="row">
+                         {{#each users}}
+                         <div class="col-12 col-sm-6 col-md-4 col-lg-3" >
+                                <div class="card" >
+                                        <h5 class="card-title text-center">{{id}}</h5>
+                                        <img src="../Imagens/Enviadas/{{imagem}}" width="150" height="150" class="rounded mx-auto d-block" alt="#">
+                                        <div class="textos">
+                                                <p>Nome: {{name}}</p>
+                                                <p>Email: {{email}}</p> 
+                                                <p type="password"> Senha: {{password}}</p>    
+                                        </div>
+                                        <a href="#" class="btn btn-warning">Atualizar</a>
+                                        <a href="#" class="btn btn-danger">Remover</a>
+                                </div>
+               
+                        </div>
+                         {{/each}}
+                </div>
+        </div>
+    
+</main>
+
+

@@ -1,11 +1,10 @@
 <nav class="navbar navbar-dark bg-dark">
-        
-        <a class="navbar-brand" href="#">
+        <a class="navbar-brand" href="/helloscreen">
         <img src="/Imagens/Icon/StickyNote.png" width="30" height="30" class="d-inline-block align-top">
         AugustoNotes
         </a> 
-                {{#if isAdmin}}
-        <form action="/adminlist" method="get">
+        {{#if isAdmin}}
+        <form action="/adminlist" method="get" enctype="multipart/form-data">
                 <button class="btn btn-outline-secondary" onclick="window.location.href='/adminlist'">Painel de Admin</button>
         </form>
         {{/if}}
@@ -13,15 +12,13 @@
                 <button class="btn btn-outline-secondary" onclick="window.location.href='/logout'">Logout</button>
         </form>
         <a class="navbar-brand" href="#"> {{{nome}}} <img src="/Imagens/Enviadas/{{{imagem}}}" alt="Foto do usuário" style="width: 50px; height: 50px; border-radius: 50%;"></a>
-
-
-
 </nav>
 <aside class="asideleft bg-dark" >
         <form action="/notes" method="get">
                 <button class="btn btn-outline-secondary" onclick="window.location.href='/notes'">Notas</button>
         </form>
 </aside>
-<main> 
-
+<main>
+        <h1 class="text-center">Notes</h1>
+        
 </main>

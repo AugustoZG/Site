@@ -30,6 +30,8 @@ app.use('/Imagens', express.static('../Imagens'));
 
 app.use('/Imagens/Enviadas', express.static('../Imagens/Enviadas'));
 
+app.use('/Imagens/Notes', express.static('../Imagens/Notes'));
+
 // abaixo é as funções do sistema como conexão do banco, ações e rotas
 //__________________________________________________________
 
@@ -85,9 +87,9 @@ app.get('/helloscreen', function(req, res) {
 });
 
 app.get('/adminlist', (req, res) => {
-    if (!req.session.user) {
-        return res.redirect('/logar'); 
-    }
+    // if (!req.session.user) {
+    //     return res.redirect('/logar'); 
+    // }
 
     let isAdmin = req.session.user.nome === 'admin';
 
@@ -99,26 +101,68 @@ app.get('/adminlist', (req, res) => {
             return res.status(500).send('Erro ao buscar usuários.');
         }
         res.render('telas/adminlist', {
-            style: 'padrao.css',
-            users:retorno,      
+            style: 'admin.css',
+            title: 'Admin',
+            users: retorno,      
             nome: req.session.user.nome,
             imagem: req.session.user.imagem,
             isAdmin: isAdmin
         });
-    })
+    });
 });
 
 app.get('/notes', function(req, res) {    
     
-    let isAdmin = req.session.user.nome === 'admin';
-    res.render('cadastros/notes', {
-        style: 'padrao.css',
-        nome: req.session.user.nome,
-        imagem: req.session.user.imagem,
-        isAdmin: isAdmin
-    })
-    
-})
+    let sql = `select * from notes order by id `;
+
+    let isAdmin = req.session.user.nome == 'admin';
+    connection.query(sql, function (error, retorno) {
+        if (error) {
+            console.error('Erro ao buscar usuários:', error);
+            return res.status(500).send('Erro ao buscar usuários.');
+        }
+        res.render('cadastros/notes', {
+            notes: retorno,
+            style: 'padrao.css',
+            title: 'Notes',
+            notes: retorno,
+            nome: req.session.user.nome,
+            imagem: req.session.user.imagem,
+            isAdmin: isAdmin
+        }) ;
+    });
+});
+
+app.post('/notes', function(req, res) {
+    let title = req.body.title
+    let description = req.body.description
+    let colorfont = req.body.colorFont
+    let colorbackground = req.body.colorbackground
+    let imagem = req.files ? req.files.imagem : null; 
+
+    if (!title || !description || !imagem) {
+        return res.render('cadastros/notes', {style: 'padrao.css',title: 'Notes', mensagem: 'É necessário preencher os campos'});
+    }
+    let caminhoImagem = path.join('../Imagens/Notes', imagem.name);
+
+    connection.query('INSERT INTO notes (title, description, imagem, colorFont, colorBackground) VALUES (?, ?, ?, ?, ?)', [title, description, caminhoImagem, colorfont, colorbackground], function (error, retorno) {
+        if (error) {
+            console.error('Erro ao cadastrar nota:', error);
+            return res.status(500).send('Erro ao cadastrar nota.');
+        }
+
+        imagem.mv(caminhoImagem, function(err) {
+            if (err) {
+                console.error('Erro ao salvar imagem:', err);
+                return res.status(500).send('Erro ao salvar imagem.');
+            }        
+
+            console.log('Usuário cadastrado:', retorno);
+            return res.redirect('/notes');
+        });
+    });
+});
+
 // Rota Principal cadastrar
 const path = require('path');
 const { title } = require('process');
@@ -207,5 +251,7 @@ app.post('/logar', function(req, res) {
         );
     });
 });
+
+
 
 app.listen(8080);

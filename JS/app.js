@@ -1,257 +1,185 @@
-
-// abaixo é uma importação direto das ferramentas
-//__________________________________________________________
-// importando modulo express
+// Importações
 const express = require('express');
-// Importando modulo express-handlebars
 const { engine } = require('express-handlebars');
-//importar modulo fileupload
 const fileUpload = require('express-fileupload');
-// importando express session
 const session = require('express-session');
-//importando modulo mysql
 const mysql = require('mysql2');
+const path = require('path');
 
 const app = express();
 
-// abaixo é uma importação direto das pastas para utilizar no sistema
-//__________________________________________________________
-//habilitando upload de arquivos
+// Configurações básicas
+const PORT = 8080;
+const SESSION_SECRET = 'admin';
+
+// Middleware
 app.use(fileUpload());
+app.use(express.json());
+app.use(express.urlencoded({ extended: false }));
+app.use(session({ secret: SESSION_SECRET, resave: false, saveUninitialized: true }));
 
-// adicionando Bootsrap
-app.use('/bootstrap', express.static('../node_modules/bootstrap/dist'));
-
-// Adicionando Css
-app.use('/css', express.static('../CSS'));
-
-// servindo imagens e outros arquivos estáticos
-app.use('/Imagens', express.static('../Imagens'));
-
-app.use('/Imagens/Enviadas', express.static('../Imagens/Enviadas'));
-
-app.use('/Imagens/Notes', express.static('../Imagens/Notes'));
-
-// abaixo é as funções do sistema como conexão do banco, ações e rotas
-//__________________________________________________________
-
-// criando seção para autenticar usuário
-app.use(session({
-    secret: 'admin', 
-    resave: false,
-    saveUninitialized: true
-}));
-
-// config do expreess-handlebars
+// Configuração do Handlebars
 app.engine('handlebars', engine());
 app.set('view engine', 'handlebars');
 app.set('views', '../views');
 
-// manipulação de dados via rotas
-app.use(express.json());
-app.use(express.urlencoded({ extended: false }));
+// Arquivos estáticos
+const staticFolders = {
+    '/bootstrap': '../node_modules/bootstrap/dist',
+    '/css': '../CSS',
+    '/Imagens': '../Imagens',
+    '/Imagens/Enviadas': '../Imagens/Enviadas',
+    '/Imagens/Notes': '../Imagens/Notes'
+};
+Object.entries(staticFolders).forEach(([route, folder]) => app.use(route, express.static(folder)));
 
-//config conexão
+// Conexão com o banco de dados
 const connection = mysql.createConnection({
     host: 'localhost',
     user: 'root',
     password: 'G@T0PR3T0o',
     database: 'projeto_site'
 });
-
-//test conection
-connection.connect(function(erro){
-    if (erro) throw erro;
+// Conectar ao banco de dados caso de erro
+connection.connect((erro) => {
+    if (erro) {
+        console.error('Erro ao conectar ao banco de dados:', erro);
+        process.exit(1);
+    }
     console.log('Conectado ao banco de dados');
 });
 
-// Rota Principal
-app.get('/logar', function(req, res) {
+// Função utilitária para verificar autenticação
+const requireAuth = (req, res, next) => {
+    if (!req.session.user) return res.redirect('/logar');
+    next();
+};
+
+// Rotas
+app.get('/logar', (req, res) => {
     res.render('cadastros/logar', { style: 'padrao.css', title: 'Login' });
-    
 });
 
-app.get('/cadastrar', function(req, res) {
-    res.render('cadastros/cadastrar',{style:'padrao.css'});
+app.get('/cadastrar', (req, res) => {
+    res.render('cadastros/cadastrar', { style: 'padrao.css', title: 'Cadastrar' });
 });
 
-app.get('/helloscreen', function(req, res) {
-
+app.get('/helloscreen', requireAuth, (req, res) => {
     res.render('telas/helloscreen', {
         style: 'padrao.css',
         title: 'Home',
         nome: req.session.user.nome,
         imagem: req.session.user.imagem,
-        isAdmin: isAdmin
+        isAdmin: req.session.user.nome === 'admin'
     });
 });
 
-app.get('/adminlist', (req, res) => {
-    // if (!req.session.user) {
-    //     return res.redirect('/logar'); 
-    // }
+app.get('/adminlist', requireAuth, (req, res) => {
+    const sql = "SELECT * FROM users WHERE name != 'admin'";
 
-    let isAdmin = req.session.user.nome === 'admin';
+    connection.query(sql, (error, users) => {
+        if (error) return res.status(500).send('Erro ao buscar usuários.');
 
-    let sql = `select * from users where name != 'admin'`;
-
-    connection.query(sql, function (error, retorno) {
-        if (error) {
-            console.error('Erro ao buscar usuários:', error);
-            return res.status(500).send('Erro ao buscar usuários.');
-        }
         res.render('telas/adminlist', {
             style: 'admin.css',
             title: 'Admin',
-            users: retorno,      
+            users,
             nome: req.session.user.nome,
             imagem: req.session.user.imagem,
-            isAdmin: isAdmin
+            isAdmin: req.session.user.nome === 'admin'
         });
     });
 });
 
-app.get('/notes', function(req, res) {    
-    
-    let sql = `select * from notes order by id `;
+app.get('/notes', requireAuth, (req, res) => {
+    const sql = 'SELECT * FROM notes ORDER BY id';
 
-    let isAdmin = req.session.user.nome == 'admin';
-    connection.query(sql, function (error, retorno) {
-        if (error) {
-            console.error('Erro ao buscar usuários:', error);
-            return res.status(500).send('Erro ao buscar usuários.');
-        }
+    connection.query(sql, (error, notes) => {
+        if (error) return res.status(500).send('Erro ao buscar notas.');
+
         res.render('cadastros/notes', {
-            notes: retorno,
             style: 'padrao.css',
             title: 'Notes',
-            notes: retorno,
+            notes,
             nome: req.session.user.nome,
             imagem: req.session.user.imagem,
-            isAdmin: isAdmin
-        }) ;
+            isAdmin: req.session.user.nome === 'admin'
+        });
     });
 });
 
-app.post('/notes', function(req, res) {
-    let title = req.body.title
-    let description = req.body.description
-    let colorfont = req.body.colorFont
-    let colorbackground = req.body.colorbackground
-    let imagem = req.files ? req.files.imagem : null; 
+app.post('/notes', requireAuth, (req, res) => {
+    const { title, description, colorFont, colorbackground } = req.body;
+    const imagem = req.files?.imagem;
 
     if (!title || !description || !imagem) {
-        return res.render('cadastros/notes', {style: 'padrao.css',title: 'Notes', mensagem: 'É necessário preencher os campos'});
-    }
-    let caminhoImagem = path.join('../Imagens/Notes', imagem.name);
-
-    connection.query('INSERT INTO notes (title, description, imagem, colorFont, colorBackground) VALUES (?, ?, ?, ?, ?)', [title, description, caminhoImagem, colorfont, colorbackground], function (error, retorno) {
-        if (error) {
-            console.error('Erro ao cadastrar nota:', error);
-            return res.status(500).send('Erro ao cadastrar nota.');
-        }
-
-        imagem.mv(caminhoImagem, function(err) {
-            if (err) {
-                console.error('Erro ao salvar imagem:', err);
-                return res.status(500).send('Erro ao salvar imagem.');
-            }        
-
-            console.log('Usuário cadastrado:', retorno);
-            return res.redirect('/notes');
-        });
-    });
-});
-
-// Rota Principal cadastrar
-const path = require('path');
-const { title } = require('process');
-
-// Rota Principal cadastrar
-app.post('/cadastrar', function(req, res) {
-    // Obter dados do formulário
-    let name = req.body.nome.toLowerCase().trim();
-    let email = req.body.email.toLowerCase().trim();
-    let password = req.body.senha;
-    let imagem = req.files ? req.files.imagem : null;  // Verificar se o arquivo foi enviado
-
-    // Verificar se algum campo está vazio
-    if (!name || !email || !password || !imagem) {
-        return res.render('cadastros/cadastrar', {style: 'padrao.css',title: 'Cadastrar', mensagem: 'É necessário preencher todos os campos' });  // Retorna resposta caso algum campo esteja vazio
+        return res.render('cadastros/notes', { mensagem: 'Preencha todos os campos.' });
     }
 
-    // Verificar se o nome de usuário já existe no banco de dados
-    let sqlVerificarUsuario = 'SELECT * FROM users WHERE name = ?';
-    
-    connection.query(sqlVerificarUsuario, [name], function(erro, resultados) {
-        if (erro) {
-            console.error('Erro ao verificar nome de usuário:', erro);
-            return res.status(500).send('Erro ao verificar nome de usuário.');
-        }
+    const caminhoImagem = path.join('../Imagens/Notes', imagem.name);
 
-        if (resultados.length > 0) {
-            return res.render('cadastros/cadastrar', {style: 'padrao.css',title: 'Cadastrar', mensagem: 'Usuário já cadastrado. Tente outro nome.' });
-        }
+    connection.query(
+        'INSERT INTO notes (title, description, imagem, colorFont, colorBackground) VALUES (?, ?, ?, ?, ?)',
+        [title, description, caminhoImagem, colorFont, colorbackground],
+        (error) => {
+            if (error) return res.status(500).send('Erro ao cadastrar nota.');
 
-        let caminhoImagem = path.join('../Imagens/Enviadas', imagem.name);
-
-        // Inserir novo usuário no banco de dados
-        let sqlInserirUsuario = 'INSERT INTO users(name, email, password, imagem) VALUES(?, ?, ?, ?)';
-        
-        connection.query(sqlInserirUsuario, [name, email, password, imagem.name], function(erro, retorno) {
-            if (erro) {
-                console.error('Erro ao inserir no banco:', erro);
-                return res.status(500).send('Erro ao cadastrar usuário.');
-            }
-
-            imagem.mv(caminhoImagem, function(err) {
-                if (err) {
-                    console.error('Erro ao salvar imagem:', err);
-                    return res.status(500).send('Erro ao salvar imagem.');
-                }
-
-                console.log('Usuário cadastrado:', retorno);
-                return res.redirect('/logar');
+            imagem.mv(caminhoImagem, (err) => {
+                if (err) return res.status(500).send('Erro ao salvar imagem.');
+                res.redirect('/notes');
             });
-        });
-    });
+        }
+    );
 });
 
-app.post('/logar', function(req, res) {
-    let nome = req.body.nome.toLowerCase().trim();
-    let password = req.body.senha;
+app.post('/cadastrar', (req, res) => {
+    const { nome, email, senha } = req.body;
+    const imagem = req.files?.imagem;
 
-    let sql = 'SELECT name, imagem FROM users WHERE name = ? AND password = ?';
+    if (!nome || !email || !senha || !imagem) {
+        return res.render('cadastros/cadastrar', { mensagem: 'Preencha todos os campos.' });
+    }
 
-    connection.query(sql, [nome, password], function(erro, retorno) {
-        if (erro) {
-            console.error('Erro na consulta:', erro);
-            return res.status(500).send('Erro interno no servidor');
+    const name = nome.toLowerCase().trim();
+    const caminhoImagem = path.join('../Imagens/Enviadas', imagem.name);
+
+    connection.query('SELECT * FROM users WHERE name = ?', [name], (error, results) => {
+        if (error) return res.status(500).send('Erro ao verificar usuário.');
+
+        if (results.length > 0) {
+            return res.render('cadastros/cadastrar', { mensagem: 'Usuário já existe.' });
         }
 
-        if (retorno.length == 0) {
-            return res.render('cadastros/logar', {style: 'padrao.css', mensagem: 'Usuário ou senha inválidos' });
-        }
+        connection.query('INSERT INTO users (name, email, password, imagem) VALUES (?, ?, ?, ?)',
+            [name, email, senha, imagem.name],
+            (error) => {
+                if (error) return res.status(500).send('Erro ao cadastrar usuário.');
 
-        // Armazenar nome e imagem na sessão
-        req.session.user = {
-            nome: retorno[0].name,
-            imagem: retorno[0].imagem
-        };
-
-        isAdmin = retorno[0].name == 'admin';
-        
-        res.redirect('/helloscreen');
-        return res.render('telas/helloscreen', {
-            style: 'padrao.css',
-            nome: retorno[0].name,
-            imagem: retorno[0].imagem,
-            isAdmin: isAdmin
-        }
+                imagem.mv(caminhoImagem, (err) => {
+                    if (err) return res.status(500).send('Erro ao salvar imagem.');
+                    res.redirect('/logar');
+                });
+            }
         );
     });
 });
 
+app.post('/logar', (req, res) => {
+    const { nome, senha } = req.body;
 
+    connection.query('SELECT * FROM users WHERE name = ? AND password = ?', [nome, senha], (error, results) => {
+        if (error || results.length === 0) {
+            return res.render('cadastros/logar', { mensagem: 'Usuário ou senha inválidos.' });
+        }
 
-app.listen(8080);
+        req.session.user = {
+            nome: results[0].name,
+            imagem: results[0].imagem
+        };
+
+        res.redirect('/helloscreen');
+    });
+});
+
+// Iniciar o servidor
+app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));

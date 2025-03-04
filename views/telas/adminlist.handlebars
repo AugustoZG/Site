@@ -17,26 +17,59 @@
 <main style="margin-top: 30px; margin-left: 8%;">
     <h1 class="text-center">Lista de usuarios do sistema</h1>
         <div class="container">
-                <div class="row">
-                         {{#each users}}
-                         <div class="col-12 col-sm-6 col-md-4 col-lg-3" >
-                                <div class="card" >
-                                        <h5 class="card-title text-center">{{id}}</h5>
-                                        <img src="../Imagens/Enviadas/{{imagem}}" width="150" height="150" class="rounded mx-auto d-block" alt="#">
-                                        <div class="textos">
-                                                <p>Nome: {{name}}</p>
-                                                <p>Email: {{email}}</p> 
-                                                <p type="password"> Senha: {{password}}</p>    
+                <table class="table table-striped table-dark table-hover table-sm">
+                        <thead class="thead-light">
+                                <tr>
+                                        <th scope="col">Id</th>
+                                        <th scope="col">Nome</th>
+                                        <th>Email</th>
+                                        <th>Senha</th>
+                                </tr>
+                        </thead >
+                        {{#each users}}
+                        <tbody>
+                                <tr>
+                                        <td>{{id}}</td>
+                                        <td>{{name}}</td>
+                                        <td>{{email}}</td>
+                                        <td>{{password}}</td>
+                                </tr>
+                        </tbody>
+                        
+                        {{/each}}
+                </table>
+                <input type="submit" class="btn btn-outline-warning" value="Mostrar imagens" onclick="mostra('Users')" style="margin-bottom: 20px; ">
+                <div class="container">
+                        <div class="row" id="Users" style="display: none;">
+                                        {{#each users}}
+                                        <div class="col-12 col-sm-6 col-md-4 col-lg-3" >
+                                        <div class="card bg-dark" style="margin-bottom: 20px; background-color: rgb(255, 255, 255);" >
+                                                <h5 class="card-title text-center" style="color: white;">{{id}}</h5>
+                                                <img src="../Imagens/Enviadas/{{imagem}}" width="150" height="150" class="rounded mx-auto d-block" alt="#">
+                                                <div class="textos" style="color: white;">
+                                                        <p>Nome: {{name}}</p>
+                                                        <p>Email: {{email}}</p> 
+                                                        <p type="password"> Senha: {{password}}</p>    
+                                                </div>
+                                                <a href="#" class="btn btn-warning ">Atualizar</a>
+                                                <a href="#" class="btn btn-danger">Remover</a>
                                         </div>
-                                        <a href="#" class="btn btn-warning">Atualizar</a>
-                                        <a href="#" class="btn btn-danger">Remover</a>
                                 </div>
-               
+                                        {{/each}}
                         </div>
-                         {{/each}}
                 </div>
         </div>
-    
+       
+        <script>
+                function mostra(element) {
+                        var display = document.getElementById(element).style.display;
+                        if(display == "none"){
+                            document.getElementById(element).style.display = "flex";    
+                        }else{
+                           document.getElementById(element).style.display = "none";     
+                        }
+                }
+        </script>
 </main>
 
 

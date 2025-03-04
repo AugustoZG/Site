@@ -20,29 +20,31 @@
 </aside>
 <main style="margin-top: 30px; margin-left: 8%;">
         <button class="btn btn-outline-warning" on onclick="mostra('CadNotes')">Add note</button>
-        <div id="CadNotes" style="display: none;">
+        <div id="CadNotes" class="text-center text-white " style="display: none; ">
                 <div class="container">
                         <div class="row">
                                 <div class="col-12 col-sm-6 col-md-4 col-lg-3" >
-                                        <div class="card" >
+                                        {{!-- <div class="card" > --}}
                                                 <form action="/notes" method="post" enctype="multipart/form-data">
                                                         <label >Imagem</label>
                                                         <input class="form-control" name="imagem" type="file" placeholder="Digite sua senha">
                                                         <div class="textos">
                                                                 <label  type="text">Titulo</label>
                                                                 <input class="form-control" name="title" type="text" placeholder="Digite o titulo da nota">
+                                                                
                                                                 <label  type="text">Descrição</label>
                                                                 <input class="form-control" name="description" type="text" placeholder="Digite sua descrição">
+
                                                                 <label type="text">Cor de fundo</label>
                                                                 <input class="form-control" name="colorbackground" type="color"></label>
+
                                                                 <label type="text">Cor da fonte</label>
                                                                 <input class="form-control" name="colorFont" type="color"></label>
                                                         </div>
                                                         <input class="btn btn-outline-warning" type="submit" value="Adicionar">
                                                         <label for="" style="color: red; font-size: 20px;">{{{mensagem}}}</label>
                                                 </form>
-                                        </div>
-                
+                                        {{!-- </div> --}}
                                 </div>
                         </div>
                 </div>
@@ -53,14 +55,14 @@
                 <div class="row">
                          {{#each notes}}
                          <div class="col-12 col-sm-6 col-md-4 col-lg-3" >
-                                <div class="card" style="background-color: {{colorBackground}}; color: {{colorFont}}">
+                                <div class="card" style="background-color: {{colorBackground}}; color: {{colorFont}}; margin-bottom: 20px">
                                         <h5 class="card-title text-center">{{title}}</h5>
                                         <img src="{{imagem}}" width="150" height="150" class="rounded mx-auto d-block" alt="#">
-                                        <div class="textos">
-                                                <p>{{description}}</p> 
+                                        <div class="card-body">
+                                                <p>{{description}}</p>
+                                                <a href="#" class="btn btn-warning">Atualizar</a>
+                                                <a href="#" class="btn btn-danger">Remover</a>
                                         </div>
-                                        <a href="#" class="btn btn-warning">Atualizar</a>
-                                        <a href="#" class="btn btn-danger">Remover</a>
                                 </div>
                
                         </div>

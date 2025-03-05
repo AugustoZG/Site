@@ -5,6 +5,7 @@ const fileUpload = require('express-fileupload');
 const session = require('express-session');
 const mysql = require('mysql2');
 const path = require('path');
+const { log } = require('console');
 
 const app = express();
 
@@ -92,8 +93,15 @@ app.get('/adminlist', requireAuth, (req, res) => {
 });
 
 app.get('/notes', requireAuth, (req, res) => {
-    const sql = 'SELECT * FROM notes ORDER BY id';
 
+    let sqlS;
+    if (req.session.user.nome == 'admin'){
+        sqlS = 'select * from notes ORDER BY id';  
+    }else{
+        sqlS = 'SELECT * FROM notes where (idUser = ' + req.session.user.idUser + ') or (idUser is null) ORDER BY id';
+    }
+
+    const sql = sqlS; 
     connection.query(sql, (error, notes) => {
         if (error) return res.status(500).send('Erro ao buscar notas.');
 
@@ -109,9 +117,10 @@ app.get('/notes', requireAuth, (req, res) => {
 });
 
 app.post('/notes', requireAuth, (req, res) => {
-    const { title, description, colorFont, colorbackground } = req.body;
+    const { title, description, colorFont, colorbackground} = req.body;
     const imagem = req.files?.imagem;
-
+    const isPublic = req.body.ckPublic === 'true';
+    const userId = isPublic ? null : req.session.user.idUser;
     if (!title || !description || !imagem) {
         return res.render('cadastros/notes', { mensagem: 'Preencha todos os campos.' });
     }
@@ -119,13 +128,14 @@ app.post('/notes', requireAuth, (req, res) => {
     const caminhoImagem = path.join('../Imagens/Notes', imagem.name);
 
     connection.query(
-        'INSERT INTO notes (title, description, imagem, colorFont, colorBackground) VALUES (?, ?, ?, ?, ?)',
-        [title, description, caminhoImagem, colorFont, colorbackground],
+        'INSERT INTO notes (title, description, imagem, colorFont, colorBackground, idUser) VALUES (?, ?, ?, ?, ?, ?)',
+
+        [title, description, caminhoImagem, colorFont, colorbackground, userId],
         (error) => {
             if (error) return res.status(500).send('Erro ao cadastrar nota.');
 
             imagem.mv(caminhoImagem, (err) => {
-                if (err) return res.status(500).send('Erro ao salvar imagem.');
+                if (err) return res.status(500) .send('Erro ao salvar imagem.');
                 res.redirect('/notes');
             });
         }
@@ -173,6 +183,7 @@ app.post('/logar', (req, res) => {
         }
 
         req.session.user = {
+            idUser: results[0].id,
             nome: results[0].name,
             imagem: results[0].imagem
         };
